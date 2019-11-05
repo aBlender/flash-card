@@ -91,7 +91,16 @@
   ;  (update-entity e (curry component-eq? card-num-sprite) (set-frames (~a "Card " (index->card-num index)) card-num-sprite)))
 
   (define deck-entity
-    (apply (curry cutscene #:name deck-name) all-pages)
+    (add-or-replace-components
+     (apply (curry cutscene #:name deck-name) all-pages)
+     (counter 0 (join (on-key 'enter (^ (compose (curryr modulo (length all-pages))
+                                                 add1)))
+                      (on-key 'right (^ (compose (curryr modulo (length all-pages))
+                                                 add1)))
+                      (on-key 'left (^ (compose (curryr modulo (length all-pages))
+                                                 sub1)))
+                      ))
+     )
     #|(~> (apply cutscene all-pages)
         (update-entity _ layer? (layer "tops"))
         (add-components _
@@ -119,14 +128,16 @@
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
           deck-entity
-          (parent (position (posn 400 580)) ;(go-to-pos-inside 'bottom-center #:offset -40)
+          (parent (position (posn 400 520)) ;(go-to-pos-inside 'bottom-center #:offset -40)
                   (children (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
-                            (bordered-box 200 80)
+                            (bordered-box 200 80
+                                          #:relative-position (posn 0 0)
+                                          )
                  ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
                             ))
           (parent (position (posn 0 0) (go-to-center))
                   (children (entity (sprite (make-text "THE END")))
-                            (bordered-box))))))
+                            (bordered-box #:color 'black))))))
 
 #|(define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
