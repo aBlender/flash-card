@@ -101,12 +101,6 @@
                                                  sub1)))
                       ))
      )
-    #|(~> (apply cutscene all-pages)
-        (update-entity _ layer? (layer "tops"))
-        (add-components _
-                        (on-key 'right (change-cutscene-by 1))
-                        (on-key 'left (change-cutscene-by -1))))|#
-
     )
   
   (play! #:width 800
@@ -114,12 +108,12 @@
          (game
           (key-manager-entity)
           (delta-time-entity)
-          (parent (position (posn 90 20))
+          (parent (position (posn 0 0) (go-to-pos-inside 'top-left))
                   (children (entity (sprite (make-text deck-name #:color 'gold)))
                             (bordered-box (+ 20 (* 9 (string-length deck-name))) 28
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
-          (parent (position (posn 720 24)) ;(go-to-pos-inside 'top-right)
+          (parent (position (posn 0 0) (go-to-pos-inside 'top-right))
                   (children (entity (sprite card-num-sprite
                                             ;(get-counter (get-entity (CURRENT-GAME)
                                             ;                         (has-name deck-name)))
@@ -128,14 +122,14 @@
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
           deck-entity
-          (parent (position (posn 400 520)) ;(go-to-pos-inside 'bottom-center #:offset -40)
+          (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center #:offset -40))
                   (children (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
                             (bordered-box 200 80
                                           #:relative-position (posn 0 0)
                                           )
                  ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
                             ))
-          (parent (position (posn 0 0) (go-to-center))
+          (parent (position (posn 0 0) (go-to-pos 'center))
                   (children (entity (sprite (make-text "THE END")))
                             (bordered-box #:color 'black))))))
 
