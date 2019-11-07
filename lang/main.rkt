@@ -90,16 +90,22 @@
   ;  (define index (get-counter (get-entity "Multi Cut Scene" g)))
   ;  (update-entity e (curry component-eq? card-num-sprite) (set-frames (~a "Card " (index->card-num index)) card-num-sprite)))
 
+  (define card-num 0)
+  
   (define deck-entity
     (add-or-replace-components
-     (apply (curry cutscene #:name deck-name) all-pages)
-     (counter 0 (join (on-key 'enter (^ (compose (curryr modulo (length all-pages))
+     (apply (curry cutscene #:name (string->symbol deck-name)) all-pages)
+     (counter 0 (begin
+                  (set! card-num (index->card-num (get-counter)))
+                  (join (on-key 'enter (^ (compose (curryr modulo (length all-pages))
                                                  add1)))
-                      (on-key 'right (^ (compose (curryr modulo (length all-pages))
-                                                 add1)))
-                      (on-key 'left (^ (compose (curryr modulo (length all-pages))
-                                                 sub1)))
-                      ))
+                        (on-key 'right (^ (compose (curryr modulo (length all-pages))
+                                                   add1)))
+                        (on-key 'left (^ (compose (curryr modulo (length all-pages))
+                                                  sub1)))
+                      )
+                  )
+              )
      )
     )
   
@@ -115,10 +121,9 @@
                                           #:border-color 'white)))
           (parent (position (posn 0 0) (go-to-pos-inside 'top-right))
                   (children (entity (sprite card-num-sprite
-                                            ;(get-counter (get-entity (CURRENT-GAME)
-                                            ;                         (has-name deck-name)))
+                                            (make-text (~a "Card " card-num) #:font-size 24 #:color 'gold)
                                             ))
-                            (bordered-box 124 42
+                            (bordered-box 140 42
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
           deck-entity
@@ -127,7 +132,7 @@
                             (bordered-box 200 80
                                           #:relative-position (posn 0 0)
                                           )
-                 ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
+                            ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
                             ))
           (parent (position (posn 0 0) (go-to-pos 'center))
                   (children (entity (sprite (make-text "THE END")))
