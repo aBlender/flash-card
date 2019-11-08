@@ -160,14 +160,13 @@
                                        (on-rule (>= (current-page-time) (get-duration (list-ref all-pages (get-current-page))))
                                                 (^ add1))
                                        (get-current-page)))))
-           (running-page-time 0 (begin (set! page-time (if (get-duration (list-ref all-pages (get-current-page)))
-                                                           (- (get-duration (list-ref all-pages (get-current-page)))
-                                                              (current-page-time))
-                                                           0))
-                                       (if (get-duration (list-ref all-pages (get-current-page)))
-                                                           (- (get-duration (list-ref all-pages (get-current-page)))
-                                                              (current-page-time))
-                                                           0)))
+           (running-page-time 0 (let ([new-page-time (if (and (< (get-current-page) (length all-pages))
+                                                              (get-duration (list-ref all-pages (get-current-page))))
+                                                         (- (get-duration (list-ref all-pages (get-current-page)))
+                                                            (current-page-time))
+                                                         0)])
+                                  (set! page-time new-page-time)
+                                  new-page-time))
            )))
 
   
@@ -207,7 +206,8 @@
                             ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
                             ))
           (parent (position (posn 0 0) (go-to-pos 'center))
-                  (children (entity (sprite (make-text "THE END")))
+                  (children (entity (sprite (make-text "=== RESULTS OVERVIEW ==="
+                                                       )))
                             (bordered-box #:color 'black))))))
 
 
