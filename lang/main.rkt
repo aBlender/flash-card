@@ -5,7 +5,8 @@
          make-back
          view-cards
          make-deck
-         view-deck)
+         view-deck
+         test-with-deck)
 
 (require meta-engine
          2htdp/image
@@ -63,7 +64,7 @@
                                                   #:color 'lightblue
                                                   #:font-size 20))))
                  (map maybe-increase-font things)
-                 (list (entity (position (posn 400 560))
+                 (list (entity (position (posn 400 550))
                                (sprite (make-text "Press [enter] to continue..."
                                                   #:color 'lightblue
                                                   #:font-size 16))))
@@ -86,28 +87,18 @@
   (define card-num-sprite
     (make-text "Card 1" #:font-size 24 #:color 'gold))
   
-  ;(define (update-card-num g e)
-  ;  (define index (get-counter (get-entity "Multi Cut Scene" g)))
-  ;  (update-entity e (curry component-eq? card-num-sprite) (set-frames (~a "Card " (index->card-num index)) card-num-sprite)))
-
   (define card-num 0)
   
   (define deck-entity
     (add-or-replace-components
      (apply (curry cutscene #:name (string->symbol deck-name)) all-pages)
-     (counter 0 (begin
-                  (set! card-num (index->card-num (get-counter)))
-                  (join (on-key 'enter (^ (compose (curryr modulo (length all-pages))
-                                                 add1)))
-                        (on-key 'right (^ (compose (curryr modulo (length all-pages))
-                                                   add1)))
-                        (on-key 'left (^ (compose (curryr modulo (length all-pages))
-                                                  sub1)))
-                      )
-                  )
-              )
-     )
-    )
+     (current-page 0 (begin
+                       (set! card-num (index->card-num (get-current-page)))
+                       (join (on-key 'enter (^ add1))
+                             (on-key 'right (^ (compose (curryr modulo (length all-pages))
+                                                        add1)))
+                             (on-key 'left (^ (compose (curryr modulo (length all-pages))
+                                                       sub1))))))))
   
   (play! #:width 800
          #:height 600
@@ -138,65 +129,92 @@
                   (children (entity (sprite (make-text "THE END")))
                             (bordered-box #:color 'black))))))
 
-#|(define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
+(define-component running-page-time number?)
+
+(define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
-    (list (set-storage "duration" (flash-card-front card) (flash-card-duration card))
+    (list (add-or-replace-components (flash-card-front card) (duration (flash-card-duration card)))
           (flash-card-back card))) ;should the answer side auto flip?
-  
+
   (define all-pages
     (flatten (map get-front-and-back cards)))
-
+  
   (define card-num-sprite
     (make-text "Card 1" #:font-size 24 #:color 'gold))
   
-  (define (update-card-num g e)
-    (define index (get-counter (get-entity "Multi Cut Scene" g)))
-    (update-entity e (curry component-eq? card-num-sprite) (set-frames (~a "Card " (index->card-num index)) card-num-sprite)))
+  (define card-num 0)
 
-  (define deck-entity
-    (~> (apply cutscene all-pages)
-        (update-entity _ layer? (layer "tops"))
-        (add-components _
-                        (on-key 'right (change-cutscene-by 1))
-                        (on-key 'left (change-cutscene-by -1)))))
+  (define page-time 0)
   
-  (start-game (sprite->entity (list (make-text deck-name #:color 'gold)
-                                    (bordered-box-sprite (+ 20 (* 9 (string-length deck-name))) 28
-                                                         #:border-color 'white))
-                              #:name "deck-name"
-                              #:position (posn 0 0)
-                              #:components (layer "ui")
-                                           (on-start (go-to-pos-inside 'top-left)))
-              (sprite->entity (list card-num-sprite
-                                    (bordered-box-sprite 124 42 #:border-color 'white))
-                              #:name "card-number"
-                              #:position (posn 0 0)
-                              #:components (layer "ui")
-                                           (on-start (go-to-pos-inside 'top-right))
-                                           (observe-change (λ (g e)
-                                                             (and (get-entity "Multi Cut Scene" g)
-                                                                  (get-counter (get-entity "Multi Cut Scene" g))))
-                                                           (λ (g e1 e2)
-                                                             (if (get-entity "Multi Cut Scene" g)
-                                                                 (update-card-num g e2)
-                                                                 e2))))
-              deck-entity
-              (sprite->entity (list (make-text "START DECK" #:color 'lightgreen #:font-size 24)
-                                    (bordered-box-sprite 200 80 #:border-color 'lightgreen))
-                              #:name "start-button"
-                              #:position   (posn 0 0)
-                              #:components (on-start (go-to-pos-inside 'bottom-center #:offset -40))
-                                           (on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f)))
-              (sprite->entity (list (make-text "THE END")
-                                    (bordered-box-sprite 800 600 #:color 'black))
-                              #:name "bg"
-                              #:position (posn 0 0))))
-|#
+  (define deck-entity
+    (add-or-replace-components
+     (apply (curry cutscene #:name (string->symbol deck-name)) all-pages)
+     (list (current-page 0 (begin
+                             (set! card-num (index->card-num (get-current-page)))
+                             (join (on-key 'enter (^ add1))
+                                   (on-key 'right (^ (compose (curryr modulo (length all-pages))
+                                                              add1)))
+                                   (on-key 'left (^ (compose (curryr modulo (length all-pages))
+                                                             sub1)))
+                                   (if (get-duration (list-ref all-pages (get-current-page)))
+                                       (on-rule (>= (current-page-time) (get-duration (list-ref all-pages (get-current-page))))
+                                                (^ add1))
+                                       (get-current-page)))))
+           (running-page-time 0 (begin (set! page-time (if (get-duration (list-ref all-pages (get-current-page)))
+                                                           (- (get-duration (list-ref all-pages (get-current-page)))
+                                                              (current-page-time))
+                                                           0))
+                                       (if (get-duration (list-ref all-pages (get-current-page)))
+                                                           (- (get-duration (list-ref all-pages (get-current-page)))
+                                                              (current-page-time))
+                                                           0)))
+           )))
+
+  
+  
+  (play! #:width 800
+         #:height 600
+         (game
+          (key-manager-entity)
+          (delta-time-entity)
+          (parent (position (posn 0 0) (go-to-pos-inside 'top-left))
+                  (children (entity (sprite (make-text deck-name #:color 'gold)))
+                            (bordered-box (+ 20 (* 9 (string-length deck-name))) 28
+                                          #:relative-position (posn 0 0)
+                                          #:border-color 'white)))
+          (parent (position (posn 0 0) (go-to-pos-inside 'top-right))
+                  (children (entity (sprite card-num-sprite
+                                            (make-text (~a "Card " card-num) #:font-size 24 #:color 'gold)
+                                            ))
+                            (bordered-box 140 42
+                                          #:relative-position (posn 0 0)
+                                          #:border-color 'white)))
+          (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center))
+                  (children (entity (sprite (make-text "TIME: 0 second(s)"
+                                                       #:font-size 16)
+                                            (make-text (~a "TIME: " (~r page-time
+                                                                        #:precision '(= 3))
+                                                           " second(s)")
+                                                       #:font-size 16)))
+                            (bordered-box 320 24
+                                          #:relative-position (posn 0 0))))
+          deck-entity
+          (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center #:offset -40))
+                  (children (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
+                            (bordered-box 200 80
+                                          #:relative-position (posn 0 0)
+                                          )
+                            ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
+                            ))
+          (parent (position (posn 0 0) (go-to-pos 'center))
+                  (children (entity (sprite (make-text "THE END")))
+                            (bordered-box #:color 'black))))))
+
 
 (define (view-deck deck)
   (apply (curry view-cards #:deck-name (deck-name deck))
          (deck-cards deck)))
 
-#;(define (test-with-deck deck)
+(define (test-with-deck deck)
   (apply (curry test-with-cards #:deck-name (deck-name deck))
          (deck-cards deck)))
