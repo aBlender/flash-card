@@ -76,6 +76,8 @@
 (define (remove-death e)
     (remove-component e (λ(c) (eq? (get-component-name c) 'death))))
 
+(define-component spawn-deck boolean?)
+
 (define (view-cards  #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
     (list (flash-card-front card)
@@ -174,10 +176,10 @@
   (play! #:width 800
          #:height 600
          (game
-          (key-manager-entity)
-          (delta-time-entity)
+          ;(key-manager-entity)
+          ;(delta-time-entity)
           (parent (position (posn 0 0) (go-to-pos-inside 'top-left))
-                  (children (entity (sprite (make-text deck-name #:color 'gold)))
+                  (children (entity (sprite (make-text deck-name #:color 'gold))) ;make this a child of bordered box
                             (bordered-box (+ 20 (* 9 (string-length deck-name))) 28
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
@@ -197,13 +199,21 @@
                                                        #:font-size 16)))
                             (bordered-box 320 24
                                           #:relative-position (posn 0 0))))
-          deck-entity
+          ;deck-entity
+          
           (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center #:offset -40))
-                  (children (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
-                            (bordered-box 200 80
-                                          #:relative-position (posn 0 0)
-                                          )
-                            ;(on-sprite-click #:rule (λ (g e) (not (get-entity "Multi Cut Scene" g))) (spawn deck-entity #:relative? #f))
+                  (children (key-manager-entity)
+                            (delta-time-entity)
+                            (mouse-manager-entity)
+                            deck-entity
+                            (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
+                            (add-or-replace-components
+                             (bordered-box 200 80
+                                           #:relative-position (posn 0 0))
+                             (spawn-deck #f (on-rule (not (get-entity (CURRENT-GAME)
+                                                                      (has-name (string->symbol deck-name))))
+                                                    (on-sprite-click (spawn deck-entity) #f) ;Does this need the else?
+                                                    #f)))
                             ))
           (parent (position (posn 0 0) (go-to-pos 'center))
                   (children (entity (sprite (make-text "=== RESULTS OVERVIEW ==="
