@@ -199,13 +199,13 @@
                                                        #:font-size 16)))
                             (bordered-box 320 24
                                           #:relative-position (posn 0 0))))
-          ;deck-entity
+          ;delta-entity ; This is much faster here
           
           (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center #:offset -40))
                   (children (key-manager-entity)
                             (delta-time-entity)
                             (mouse-manager-entity)
-                            deck-entity
+                            deck-entity ; Why is this 15-20fps slower than in top-level?
                             (entity (sprite (make-text "START DECK" #:color 'lightgreen #:font-size 24)))
                             (add-or-replace-components
                              (bordered-box 200 80
@@ -213,7 +213,7 @@
                              (spawn-deck #f (on-rule (not (get-entity (CURRENT-GAME)
                                                                       (has-name (string->symbol deck-name))))
                                                     (on-sprite-click (spawn deck-entity) #f) ;Does this need the else?
-                                                    #f)))
+                                                    #f))) ;There's some slow down here too.
                             ))
           (parent (position (posn 0 0) (go-to-pos 'center))
                   (children (entity (sprite (make-text "=== RESULTS OVERVIEW ==="
