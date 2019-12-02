@@ -136,7 +136,7 @@
 (define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
     (list (add-or-replace-components (flash-card-front card) (duration (flash-card-duration card)))
-          (flash-card-back card))) ;should the answer side auto flip?
+          (add-or-replace-components (flash-card-back card) (duration 0)))) 
 
   (define all-pages
     (flatten (map get-front-and-back cards)))
