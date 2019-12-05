@@ -89,24 +89,27 @@
   (define card-num-sprite
     (make-text "Card 1" #:font-size 24 #:color 'gold))
   
-  (define card-num 0)
+  (define card-num 1)
   
   (define deck-entity
     (add-or-replace-components
      (apply (curry cutscene #:name (string->symbol deck-name)) all-pages)
-     (current-page 0 (begin
+     (list
+      (current-page 0 (begin
                        (set! card-num (index->card-num (get-current-page)))
                        (join (on-key 'enter (^ add1))
-                             (on-key 'right (^ (compose (curryr modulo (length all-pages))
-                                                        add1)))
-                             (on-key 'left (^ (compose (curryr modulo (length all-pages))
-                                                       sub1))))))))
+                        (on-key 'right (^ (compose (curryr modulo (length all-pages))
+                                           add1)))
+                        (on-key 'left (^ (compose (curryr modulo (length all-pages))
+                                          sub1))))))
+      (running-page-time 0))))
   
   (play! #:width 800
          #:height 600
          (game
           (key-manager-entity)
           (delta-time-entity)
+          (time-display (thunk (flash-card-duration (list-ref cards (sub1 card-num))))) 
           (parent (position (posn 0 0) (go-to-pos-inside 'top-left))
                   (children (entity (sprite (make-text deck-name #:color 'gold)))
                             (bordered-box (+ 20 (* 9 (string-length deck-name))) 28
@@ -132,6 +135,17 @@
                             (bordered-box #:color 'black))))))
 
 (define-component running-page-time number?)
+
+(define (time-display page-time)
+  (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center))
+          (children (entity (sprite (make-text "TIME: 0 second(s)"
+                                               #:font-size 16)
+                                    (make-text (~a "TIME: " (~r (page-time)
+                                                                #:precision '(= 3))
+                                                   " second(s)")
+                                               #:font-size 16)))
+                    (bordered-box 320 24
+                                  #:relative-position (posn 0 0)))))
 
 (define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
@@ -190,15 +204,7 @@
                             (bordered-box 140 42
                                           #:relative-position (posn 0 0)
                                           #:border-color 'white)))
-          (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center))
-                  (children (entity (sprite (make-text "TIME: 0 second(s)"
-                                                       #:font-size 16)
-                                            (make-text (~a "TIME: " (~r page-time
-                                                                        #:precision '(= 3))
-                                                           " second(s)")
-                                                       #:font-size 16)))
-                            (bordered-box 320 24
-                                          #:relative-position (posn 0 0))))
+          (time-display (thunk page-time))
           ;delta-entity ; This is much faster here
           
           (parent (position (posn 0 0) (go-to-pos-inside 'bottom-center #:offset -40))
