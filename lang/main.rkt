@@ -222,8 +222,7 @@
                                                     #f))) ;There's some slow down here too.
                             ))
           (parent (position (posn 0 0) (go-to-pos 'center))
-                  (children (entity (sprite (make-text "=== RESULTS OVERVIEW ==="
-                                                       )))
+                  (children (entity (sprite (make-text "The end!")))
                             (bordered-box #:color 'black))))))
 
 
