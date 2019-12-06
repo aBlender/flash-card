@@ -147,7 +147,7 @@
                     (bordered-box 320 24
                                   #:relative-position (posn 0 0)))))
 
-(define (test-with-cards  #:deck-name [deck-name "DECK NAME"] . cards)
+(define (test-with-cards #:start-on (start-on 0) #:deck-name [deck-name "DECK NAME"] . cards)
   (define (get-front-and-back card)
     (list (add-or-replace-components (flash-card-front card) (duration (flash-card-duration card)))
           (add-or-replace-components (flash-card-back card) (duration 0)))) 
@@ -165,7 +165,7 @@
   (define deck-entity
     (add-or-replace-components
      (apply (curry cutscene #:name (string->symbol deck-name)) all-pages)
-     (list (current-page 0 (begin
+     (list (current-page start-on (begin
                              (set! card-num (index->card-num (get-current-page)))
                              (join (on-key 'enter (^ add1))
                                    (on-key 'right (^ (compose (curryr modulo (length all-pages))
@@ -230,6 +230,6 @@
   (apply (curry view-cards #:deck-name (deck-name deck))
          (deck-cards deck)))
 
-(define (test-with-deck deck)
-  (apply (curry test-with-cards #:deck-name (deck-name deck))
+(define (test-with-deck #:start-on (start-on 0) deck)
+  (apply (curry test-with-cards #:start-on start-on #:deck-name (deck-name deck))
          (deck-cards deck)))
